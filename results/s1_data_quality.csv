@@ -1,0 +1,19 @@
+check,value
+CountyPresElect rows,3153
+CountyCVAP rows,3225
+Validate Join matches (FIPS_txt <- FIPS),3115
+Course expected join matches,3115
+Rows without CVAP match,38
+  of which Alaska,38
+  of which other,0
+Alaska rows removed,41
+Rows after cleaning,3112
+"Turnout > 1 capped, 2008",6
+"Turnout > 1 capped, 2012",2
+"Turnout > 1 capped, 2016",4
+"Turnout > 1 capped, 2020",13
+US_Counties polygons,3112
+Validate Join matches (fips <- FIPS_txt),3112
+Course expected county matches,3112
+Polygons with 2020 turnout,3112
+Election rows without a polygon,0

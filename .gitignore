@@ -1,0 +1,18 @@
+# Esri exercise data (copied from C:\EsriTraining; never committed)
+data/
+# ArcGIS scratch outputs
+outputs/
+*.gdb/
+*.aprx
+*.nc
+*.lock
+*.sr.lock
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

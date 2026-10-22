@@ -1,0 +1,72 @@
+{
+  "join_cvap": {
+    "input_rows": 3153,
+    "join_table_rows": 3225,
+    "validate_join_matches": 3115,
+    "rows_with_cvap_after_join": 3115,
+    "course_expected_matches": 3115
+  },
+  "nulls_after_join": {
+    "rows_without_cvap_match": 38,
+    "by_state": {
+      "ALASKA": 38
+    },
+    "non_alaska_unmatched": [],
+    "cvap_null_by_year_before_cleaning": {
+      "2008": 39,
+      "2012": 38,
+      "2016": 38,
+      "2020": 38
+    }
+  },
+  "alaska": {
+    "rows_removed": 41,
+    "reason": "Alaska reports votes by legislative district, not by borough; no CVAP match possible"
+  },
+  "turnout_cap": {
+    "counties_capped_by_year": {
+      "2008": 6,
+      "2012": 2,
+      "2016": 4,
+      "2020": 13
+    },
+    "total_capped_rows": 25,
+    "reason": "CVAP is a 5-year ACS average while votes are counted on one day; in small counties sampling error and population change can push votes above the estimated citizen voting-age population"
+  },
+  "nulls_after_cleaning": {
+    "rows": 3112,
+    "rows_with_any_null_cvap": [
+      {
+        "FIPS_txt": "22059",
+        "county_name": "LASALLE",
+        "state": "LOUISIANA",
+        "geoname": "LaSalle Parish, Louisiana",
+        "cvap_est_2008": null,
+        "cvap_est_2012": 11220,
+        "cvap_est_2016": 11200,
+        "cvap_est_2020": 11125
+      }
+    ],
+    "cvap_null_by_year": {
+      "2008": 1,
+      "2012": 0,
+      "2016": 0,
+      "2020": 0
+    },
+    "turnout_null_by_year": {
+      "2008": 1,
+      "2012": 0,
+      "2016": 0,
+      "2020": 0
+    }
+  },
+  "geoenable": {
+    "county_polygons": 3112,
+    "validate_join_matches": 3112,
+    "polygons_with_turnout_2020": 3112,
+    "course_expected_matches": 3112,
+    "unmatched_polygons": [],
+    "election_rows_without_polygon": 0,
+    "election_rows_without_polygon_fips": []
+  }
+}

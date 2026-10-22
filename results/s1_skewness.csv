@@ -1,0 +1,9 @@
+variable,label,n,mean,median,std,skewness,kurtosis_excess,min,max
+voter_turnout_2020,Voter turnout 2020,3112,0.6588,0.6602,0.097,0.096,0.577,0.2097,1.0
+gender_MEDAGE_CY,Median age,3112,42.6033,42.4,5.3549,0.114,0.536,22.3,64.6
+householdincome_PCI_CY,Per-capita income ($),3112,32704.8628,31752.0,7994.1369,1.487,4.957,12514.0,85462.0
+educationalattainment_BACHDEG_CY_P,Bachelor's degree (% of 25+),3112,15.556,14.525,6.0071,0.959,1.246,0.0,47.68
+educationalattainment_NOHS_CY_P,No high school diploma (%),3112,4.0081,3.18,3.0724,3.05,16.683,0.0,34.63
+households_ACSHHBPOV_P,Households below poverty (%),3112,14.349,13.39,5.8068,1.002,1.617,0.0,46.08
+pop_sqmi,Population per sq mi,3112,275.4007,44.2,1863.035,26.621,906.79,0.1,74146.7
+pctdiff_dem_vs_gop_2020,Dem minus GOP share 2020,3112,-0.3171,-0.3848,0.3209,0.82,0.226,-0.9309,0.8675

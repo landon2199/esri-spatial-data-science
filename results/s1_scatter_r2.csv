@@ -1,0 +1,4 @@
+x,y,r2,slope_y_on_x,n
+voter_turnout_2020,gender_MEDAGE_CY,0.2007,24.731462,3112
+voter_turnout_2020,householdincome_PCI_CY,0.3195,46580.562031,3112
+voter_turnout_2020,educationalattainment_BACHDEG_CY_P,0.215,28.711135,3112
