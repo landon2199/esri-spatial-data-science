@@ -164,7 +164,7 @@ def main():
     C.write_csv([{"pattern": k, "counties": int(v)} for k, v in ehsa_counts.items()], C.RES / "s4_ehsa_counts.csv")
 
     df_loa = C.table_to_df(loa)
-    cat_col = next(c for c in df_loa.columns if c.upper() == "CATEGORY")
+    cat_col = next(c for c in df_loa.columns if c.upper() == "CO_TYPE")
     loa_counts = df_loa[cat_col].value_counts()
     C.write_csv([{"category": k, "counties": int(v)} for k, v in loa_counts.items()], C.RES / "s4_loa_counts.csv")
     summary["counts"] = {"gi": gi_rows, "lisa": {k: int(v) for k, v in lisa_counts.items()},
@@ -185,8 +185,10 @@ def main():
     paths_o, dfo = C.read_polygons(loa, [cat_col])
     paths_r, dfr = C.read_polygons(counties, [RATE_FIELD])
 
-    def legend(ax, items, title):
-        ax.legend(handles=[Patch(facecolor=c, edgecolor="#999999", label=l) for l, c in items], loc="lower left", fontsize=6, frameon=False, title=title, title_fontsize=7)
+    def legend(ax, items, title, **kw):
+        opts = {"loc": "lower left", "fontsize": 6, "frameon": False, "title": title, "title_fontsize": 7}
+        opts.update(kw)
+        ax.legend(handles=[Patch(facecolor=c, edgecolor="#999999", label=l) for l, c in items], **opts)
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 9))
     ax = axes[0, 0]
@@ -215,19 +217,21 @@ def main():
     fig.savefig(C.FIG / "s4_hotspots_lisa.png")
     plt.close(fig)
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6.2))
     ax = axes[0]
     C.draw_paths(ax, paths_e, [EHSA_COLORS.get(p, "#cccccc") for p in dfe[pat_col]], edgecolor="white", linewidth=0.1)
     C.draw_paths(ax, state_paths, "none", edgecolor="#444444", linewidth=0.4)
     ax.set_title("Emerging Hot Spot Analysis, SNAP rate 2010-2019 (contiguity, 1 time step)")
     present = [p for p in EHSA_COLORS if p in set(dfe[pat_col])]
-    legend(ax, [(f"{p} ({int(ehsa_counts.get(p, 0))})", EHSA_COLORS[p]) for p in present], "Pattern (counties)")
+    legend(ax, [(f"{p} ({int(ehsa_counts.get(p, 0))})", EHSA_COLORS[p]) for p in present], "Pattern (counties)",
+           loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=3)
     ax = axes[1]
     C.draw_paths(ax, paths_o, [LOA_COLORS.get(p, "#cccccc") for p in dfo[cat_col]], edgecolor="white", linewidth=0.1)
     C.draw_paths(ax, state_paths, "none", edgecolor="#444444", linewidth=0.4)
     ax.set_title("Local Outlier Analysis, SNAP rate 2010-2019 (contiguity, 499 permutations)")
     present = [p for p in LOA_COLORS if p in set(dfo[cat_col])]
-    legend(ax, [(f"{p} ({int(loa_counts.get(p, 0))})", LOA_COLORS[p]) for p in present], "Category (counties)")
+    legend(ax, [(f"{p} ({int(loa_counts.get(p, 0))})", LOA_COLORS[p]) for p in present], "Category (counties)",
+           loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=3)
     fig.tight_layout()
     fig.savefig(C.FIG / "s4_spacetime.png")
     plt.close(fig)

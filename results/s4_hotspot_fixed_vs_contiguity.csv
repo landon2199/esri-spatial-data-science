@@ -1,0 +1,4 @@
+bin_fixed,cold,hot,ns
+cold,350,0,664
+hot,0,398,500
+ns,3,8,1182

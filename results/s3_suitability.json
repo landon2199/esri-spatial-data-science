@@ -1,0 +1,183 @@
+{
+  "locate_regions": {
+    "total_area_km2": 2.0,
+    "shape": "CIRCLE",
+    "regions": 1,
+    "evaluation": "HIGHEST_AVERAGE_VALUE",
+    "shape_tradeoff": 50,
+    "note": "area is my choice; the .sam Locate block only holds the dialog default (338.56 km2 = 10 % of the extent)"
+  },
+  "best_region": {
+    "area_km2": 2.008,
+    "centroid_x_vt_stateplane_m": 455233.9,
+    "centroid_y_vt_stateplane_m": 229687.6,
+    "centroid_lon": -73.06354,
+    "centroid_lat": 44.56602,
+    "mean_suitability": 7.708,
+    "min_suitability": 6.782,
+    "max_suitability": 8.412,
+    "submodel_means_1to10": {
+      "HQ_Building_Site": 8.43,
+      "HQ_Energy_Independence": 7.75,
+      "HQ_Access_to_Amenities": 7.69,
+      "HQ_Environmental_Concerns": 6.96
+    }
+  },
+  "final_surface": {
+    "min": 2.211,
+    "max": 8.636,
+    "mean": 5.613,
+    "submodel_weights": {
+      "HQ_Building_Site": 1.0,
+      "HQ_Energy_Independence": 1.0,
+      "HQ_Access_to_Amenities": 1.0,
+      "HQ_Environmental_Concerns": 1.0
+    }
+  },
+  "submodel_ranges": [
+    {
+      "submodel": "HQ_Building_Site",
+      "weight_sum": 4.0,
+      "my_min": 16.288,
+      "my_max": 40.0
+    },
+    {
+      "submodel": "HQ_Environmental_Concerns",
+      "weight_sum": 5.7,
+      "my_min": 5.7,
+      "my_max": 37.003,
+      "course_min": 5.7,
+      "course_max": 37.003
+    },
+    {
+      "submodel": "HQ_Access_to_Amenities",
+      "weight_sum": 3.35,
+      "my_min": 5.736,
+      "my_max": 33.5,
+      "course_min": 5.617,
+      "course_max": 33.5
+    },
+    {
+      "submodel": "HQ_Energy_Independence",
+      "weight_sum": 4.85,
+      "my_min": 4.951,
+      "my_max": 48.16,
+      "course_min": 4.951,
+      "course_max": 48.16
+    }
+  ],
+  "criteria": [
+    {
+      "submodel": "HQ_Building_Site",
+      "criterion": "LandUse",
+      "function": "Lookup table (Reclassify)",
+      "parameters": "{\"11\": 1, \"21\": 8, \"22\": 9, \"23\": 10, \"24\": 7, \"31\": 9, \"41\": 3, \"42\": 3, \"43\": 3, \"52\": 6, \"71\": 8, \"81\": 7, \"82\": 5, \"90\": 1, \"95\": 1}",
+      "weight": 1.0,
+      "source": "assumption (course uses a lookup table; values not saved in .sam)"
+    },
+    {
+      "submodel": "HQ_Building_Site",
+      "criterion": "Slope",
+      "function": "MSSmall",
+      "parameters": "mean x1, sd x1",
+      "weight": 1.0,
+      "source": "course function (MSSmall); weight 1.0 is an assumption"
+    },
+    {
+      "submodel": "HQ_Building_Site",
+      "criterion": "Dist_MRoads",
+      "function": "Small",
+      "parameters": "midpoint 8514.5 m (half of max), spread 5",
+      "weight": 1.0,
+      "source": "course function (Small); midpoint = default half-range as in the .sam criteria; weight assumption"
+    },
+    {
+      "submodel": "HQ_Building_Site",
+      "criterion": "Views_Zero",
+      "function": "LogisticDecay",
+      "parameters": "min 0, max 955, y-intercept 99 % (tool default)",
+      "weight": 1.0,
+      "source": "course function (logistic decay, per the exercise); parameters default; weight assumption"
+    },
+    {
+      "submodel": "HQ_Environmental_Concerns",
+      "criterion": "Dist_Protect",
+      "function": "LogisticGrowth",
+      "parameters": "{\"MinimumValue\": 0.0, \"MaximumValue\": 5110.313, \"YInterceptPct\": 1.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 1.0, \"UpperThreshold\": 5110.313, \"AboveThreshold\": 10.0, \"InvertFunction\": false}",
+      "weight": 1.6,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Environmental_Concerns",
+      "criterion": "Dist_Biol",
+      "function": "MSLarge",
+      "parameters": "{\"MeanMultiplier\": 1.0, \"StdvMultiplier\": 1.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 1.0, \"UpperThreshold\": 3779.762, \"AboveThreshold\": 10.0, \"InvertFunction\": false}",
+      "weight": 1.5,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Environmental_Concerns",
+      "criterion": "Dist_Wetlands",
+      "function": "Linear",
+      "parameters": "{\"MinimumValue\": 0.0, \"MaximumValue\": 2554.9363, \"LowerThreshold\": 0.0, \"BelowThreshold\": 1.0, \"UpperThreshold\": 2554.9363, \"AboveThreshold\": 10.0, \"InvertFunction\": false}",
+      "weight": 1.4,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Environmental_Concerns",
+      "criterion": "Dist_Streams",
+      "function": "Large",
+      "parameters": "{\"MidPoint\": 3486.4917, \"PointSpread\": 5.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 1.0, \"UpperThreshold\": 6972.9834, \"AboveThreshold\": 10.0, \"InvertFunction\": false}",
+      "weight": 1.2,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Access_to_Amenities",
+      "criterion": "Dist_Airport",
+      "function": "Small",
+      "parameters": "{\"MidPoint\": 22097.2461, \"PointSpread\": 5.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 10.0, \"UpperThreshold\": 44194.4922, \"AboveThreshold\": 1.0, \"InvertFunction\": false}",
+      "weight": 1.0,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Access_to_Amenities",
+      "criterion": "Dist_Rec",
+      "function": "MSSmall",
+      "parameters": "{\"MeanMultiplier\": 1.0, \"StdvMultiplier\": 1.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 10.0, \"UpperThreshold\": 6790.6772, \"AboveThreshold\": 1.0, \"InvertFunction\": false}",
+      "weight": 1.0,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Access_to_Amenities",
+      "criterion": "Dist_Resident",
+      "function": "Linear",
+      "parameters": "{\"MinimumValue\": 0.0, \"MaximumValue\": 8528.9209, \"LowerThreshold\": 0.0, \"BelowThreshold\": 10.0, \"UpperThreshold\": 8528.9209, \"AboveThreshold\": 1.0, \"InvertFunction\": true}",
+      "weight": 1.35,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Energy_Independence",
+      "criterion": "Aspect",
+      "function": "Gaussian",
+      "parameters": "{\"MidPoint\": 179.5, \"PointSpread\": 0.0003, \"LowerThreshold\": -1.0, \"BelowThreshold\": 1.0, \"UpperThreshold\": 360.0, \"AboveThreshold\": 1.0, \"InvertFunction\": false}",
+      "weight": 1.35,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Energy_Independence",
+      "criterion": "Dist_Elect",
+      "function": "Small",
+      "parameters": "{\"MidPoint\": 5749.1133, \"PointSpread\": 5.0, \"LowerThreshold\": 0.0, \"BelowThreshold\": 10.0, \"UpperThreshold\": 11498.2266, \"AboveThreshold\": 1.0, \"InvertFunction\": false}",
+      "weight": 1.7,
+      "source": "course (Suitability.sam)"
+    },
+    {
+      "submodel": "HQ_Energy_Independence",
+      "criterion": "Solar",
+      "function": "Large",
+      "parameters": "{\"MidPoint\": 442742.0596, \"PointSpread\": 5.0, \"LowerThreshold\": 22187.6816, \"BelowThreshold\": 1.0, \"UpperThreshold\": 863296.4375, \"AboveThreshold\": 10.0, \"InvertFunction\": false}",
+      "weight": 1.8,
+      "source": "course (Suitability.sam)"
+    }
+  ]
+}

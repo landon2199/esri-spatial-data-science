@@ -96,16 +96,20 @@ def parse_range_diagnostics(text):
     lines = m.group(1).splitlines()[2:]
     for line in lines:
         parts = re.split(r"\s{2,}", line.strip())
-        if len(parts) < 6:
-            continue
-        name, nums = parts[0], parts[1:]
+        nums = parts[1:]
         try:
             vals = [float(x.rstrip("*+")) for x in nums]
         except ValueError:
             continue
-        rows.append({"variable": name, "train_min": vals[0], "train_max": vals[1], "other_min": vals[2], "other_max": vals[3],
-                     "share_a": vals[4], "share_b": vals[5] if len(vals) > 5 else None,
-                     "extrapolation_flag": "+" in nums[4], "range_mismatch_flag": "*" in nums[4] or "+" in nums[4]})
+        name = parts[0]
+        if len(vals) == 9:  # PREDICT run: training, validation, prediction min/max + shares (a), (b), (c)
+            rows.append({"variable": name, "train_min": vals[0], "train_max": vals[1], "validation_min": vals[2], "validation_max": vals[3],
+                         "prediction_min": vals[4], "prediction_max": vals[5], "share_training_a": vals[6], "share_validation_b": vals[7],
+                         "share_prediction_c": vals[8], "extrapolation_flag": nums[8].endswith("+"),
+                         "note": "share (c) > 1 or '+' means the prediction data reach outside the training range (extrapolation)"})
+        elif len(vals) == 6:  # TRAIN run: training, validation min/max + shares (a), (b)
+            rows.append({"variable": name, "train_min": vals[0], "train_max": vals[1], "validation_min": vals[2], "validation_max": vals[3],
+                         "share_training_a": vals[4], "share_validation_b": vals[5], "extrapolation_flag": False})
     return rows
 
 
@@ -183,8 +187,11 @@ def leave_one_state_out(arcpy, gdb, variables, distance):
             number_validation_runs=1, model_type="FOREST-BASED",
         )
         C.save_messages(f"s2_loso_{st}")
-        df = C.table_to_df(out, ["voter_turnout", "PREDICTED"])
-        y, yhat = df["voter_turnout"].values, df["PREDICTED"].values
+        # the output keeps SOURCE_ID (= OBJECTID of the held-out features); join the observed turnout back on it
+        pred = C.table_to_df(out, ["SOURCE_ID", "PREDICTED"])
+        obs = C.table_to_df(TRAIN, ["OBJECTID", "voter_turnout"], q).rename(columns={"OBJECTID": "SOURCE_ID"})
+        df = pred.merge(obs, on="SOURCE_ID")
+        y, yhat = df["voter_turnout"].values.astype(float), df["PREDICTED"].values.astype(float)
         pooled_y += list(y)
         pooled_hat += list(yhat)
         rows.append({"held_out_state": st, "n_test": len(df), "n_train": C.count(TRAIN) - len(df), "r2_held_out": round(r2_score(y, yhat), 4),
@@ -196,7 +203,7 @@ def leave_one_state_out(arcpy, gdb, variables, distance):
     return rows, pooled
 
 
-def figures(plt, models, loso_rows, loso_pooled, gdb, refined_vars):
+def figures(arcpy, plt, models, loso_rows, loso_pooled, gdb, refined_vars):
     # 1. validation R2 per model
     fig, ax = plt.subplots(figsize=(7, 3.8))
     names = [m["model"] for m in models]
@@ -242,7 +249,7 @@ def figures(plt, models, loso_rows, loso_pooled, gdb, refined_vars):
 
     # 4. tract map
     paths, df = C.read_polygons(f"{gdb}/M4_refined_tracts_pred", ["PREDICTED"])
-    cpaths, cdf = C.read_polygons(TRAIN, ["voter_turnout", "state"], "state = 'Iowa'")
+    cpaths, cdf = C.read_polygons(TRAIN, ["voter_turnout", "state"], "state = 'Iowa'", spatial_reference=arcpy.Describe(TRACTS).spatialReference)
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.6))
     vmin, vmax = 0.45, 0.85
     cmap = plt.get_cmap("viridis")
@@ -286,7 +293,10 @@ def main():
     down["tract_prediction_summary"] = {"n_tracts": len(tract_pred), "mean": round(float(tract_pred.mean()), 4),
                                         "min": round(float(tract_pred.min()), 4), "max": round(float(tract_pred.max()), 4)}
     extrap = [r for r in down.get("range_diagnostics", []) if r["extrapolation_flag"]]
-    C.log(f"Range diagnostics: {len(down.get('range_diagnostics', []))} variables parsed, {len(extrap)} flagged '+' (prediction range wider than training)")
+    down["n_variables_extrapolating"] = len(extrap)
+    down["variables_extrapolating"] = [r["variable"] for r in extrap]
+    C.log(f"Range diagnostics: {len(down.get('range_diagnostics', []))} variables parsed, {len(extrap)} flagged '+' "
+          f"(prediction range wider than training): {[r['variable'] for r in extrap]}")
     C.write_csv(down.get("range_diagnostics", []), C.RES / "s2_range_diagnostics.csv")
 
     # Spatially blocked validation
@@ -312,7 +322,7 @@ def main():
                                  "mean_state_r2": float(np.mean([r["r2_held_out"] for r in loso_rows])),
                                  "random_holdout_r2_mean": models[-1]["validation_r2_mean"]}},
                  C.RES / "s2_prediction.json")
-    figures(plt, models, loso_rows, loso_pooled, gdb, refined_vars)
+    figures(arcpy, plt, models, loso_rows, loso_pooled, gdb, refined_vars)
     C.log("Section 2 done")
 
 

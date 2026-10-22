@@ -1,0 +1,223 @@
+{
+  "hotspot_fixed": {
+    "warnings": [
+      "WARNING 000853: The default neighborhood search threshold was 145772.3786 meters."
+    ],
+    "distance_band_m": 145772.3786,
+    "conceptualization": "FIXED_DISTANCE_BAND",
+    "min_neighbors": 1,
+    "mean_neighbors": 37.4,
+    "max_neighbors": 84,
+    "features_without_neighbors": 0
+  },
+  "hotspot_contiguity": {
+    "warnings": [],
+    "conceptualization": "CONTIGUITY_EDGES_CORNERS",
+    "min_neighbors": 1,
+    "mean_neighbors": 5.95,
+    "max_neighbors": 14,
+    "features_without_neighbors": 0
+  },
+  "clusters_outliers": {
+    "conceptualization": "CONTIGUITY_EDGES_CORNERS",
+    "permutations": 999,
+    "fdr": true,
+    "warnings": []
+  },
+  "cube": {
+    "variables": [
+      "projection",
+      "time",
+      "x",
+      "y",
+      "lat",
+      "lon",
+      "poly_breaks",
+      "poly_coords",
+      "time_step_ID",
+      "location_ID",
+      "COUNTYID",
+      "PREDICTION_BINARY_MASK",
+      "SNAPRATE_NONE_ZEROS",
+      "SNAPRATE_NONE_ZEROS_TREND_ZSCORE",
+      "SNAPRATE_NONE_ZEROS_TREND_PVALUE",
+      "SNAPRATE_NONE_ZEROS_TREND_BIN"
+    ],
+    "dimensions": {
+      "time": 10,
+      "locations": 3105
+    },
+    "analysis_variable": "SNAPRATE_NONE_ZEROS",
+    "messages_excerpt": [
+      "Start Time: Thursday, October 22, 2026 1:51:43 PM",
+      "--------------- Space Time Cube Characteristics ---------------",
+      "Time step interval                                       1 year",
+      "Time step alignment                                         End",
+      "First time step temporal bias                             0.00%",
+      "Last time step temporal bias                              0.00%",
+      "Locations                                          3105",
+      "% of locations with estimated observations         0.00",
+      "% of all observations that were estimated          0.00",
+      "------ Overall Data Trend - SNAPRATE_NONE_ZEROS ------",
+      "Trend direction                             Decreasing",
+      "Trend statistic                                -3.2199",
+      "Trend p-value                                   0.0013",
+      "Succeeded at Thursday, October 22, 2026 1:51:47 PM (Elapsed Time: 3.33 seconds)"
+    ]
+  },
+  "ehsa": {
+    "neighborhood_time_step": 1,
+    "conceptualization": "CONTIGUITY_EDGES_CORNERS",
+    "fdr": "not offered by the tool",
+    "messages_excerpt": [
+      "First time step temporal bias                    0.00%",
+      "Last time step temporal bias                     0.00%",
+      "All locations with hot or cold spot trends: 1242 of 3105",
+      "- Consecutive: a single uninterrupted run of hot time step intervals, comprised of less than 90% of all intervals",
+      "- Intensifying: at least 90% of the time step intervals are hot, and becoming hotter over time",
+      "- Persistent: at least 90% of the time step intervals are hot, with no trend up or down",
+      "- Diminishing: at least 90% of the time step intervals are hot, and becoming less hot over time",
+      "- Historical: at least 90% of the time step intervals are hot, but the most recent time step interval is not",
+      "- Consecutive: a single uninterrupted run of cold time step intervals, comprised of less than 90% of all",
+      "- Intensifying: at least 90% of the time step intervals are cold, and becoming colder over time",
+      "- Persistent: at least 90% of the time step intervals are cold, with no trend up or down",
+      "- Diminishing: at least 90% of the time step intervals are cold, and becoming less cold over time intervals",
+      "- Historical: at least 90% of the time step intervals are cold, but the most recent time step interval is not"
+    ]
+  },
+  "loa": {
+    "permutations": 499,
+    "neighborhood_time_step": 1,
+    "conceptualization": "CONTIGUITY_EDGES_CORNERS",
+    "fdr": "not offered by the tool"
+  },
+  "hotspot_comparison": {
+    "share_same_class_hot_cold_ns": 0.6216,
+    "z_correlation": 0.8767,
+    "hot_fixed": 898,
+    "hot_contiguity": 406,
+    "cold_fixed": 1014,
+    "cold_contiguity": 353
+  },
+  "counts": {
+    "gi": [
+      {
+        "Gi_Bin": -3,
+        "class": "Cold spot, 99%",
+        "fixed_distance": 685,
+        "contiguity": 20
+      },
+      {
+        "Gi_Bin": -2,
+        "class": "Cold spot, 95%",
+        "fixed_distance": 202,
+        "contiguity": 192
+      },
+      {
+        "Gi_Bin": -1,
+        "class": "Cold spot, 90%",
+        "fixed_distance": 127,
+        "contiguity": 141
+      },
+      {
+        "Gi_Bin": 0,
+        "class": "Not significant",
+        "fixed_distance": 1193,
+        "contiguity": 2346
+      },
+      {
+        "Gi_Bin": 1,
+        "class": "Hot spot, 90%",
+        "fixed_distance": 77,
+        "contiguity": 77
+      },
+      {
+        "Gi_Bin": 2,
+        "class": "Hot spot, 95%",
+        "fixed_distance": 132,
+        "contiguity": 125
+      },
+      {
+        "Gi_Bin": 3,
+        "class": "Hot spot, 99%",
+        "fixed_distance": 689,
+        "contiguity": 204
+      }
+    ],
+    "lisa": {
+      "Not significant": 2400,
+      "LL": 392,
+      "HH": 281,
+      "LH": 17,
+      "HL": 15
+    },
+    "ehsa": {
+      "No Pattern Detected": 1863,
+      "Consecutive Cold Spot": 580,
+      "Intensifying Cold Spot": 180,
+      "Diminishing Hot Spot": 145,
+      "Persistent Hot Spot": 101,
+      "New Cold Spot": 97,
+      "Sporadic Cold Spot": 68,
+      "Consecutive Hot Spot": 27,
+      "Persistent Cold Spot": 26,
+      "Intensifying Hot Spot": 12,
+      "Sporadic Hot Spot": 5,
+      "Diminishing Cold Spot": 1
+    },
+    "loa": {
+      "Only Low-Low Cluster": 1107,
+      "Never Significant": 1081,
+      "Only High-High Cluster": 725,
+      "Multiple Types": 92,
+      "Only Low-High Outlier": 60,
+      "Only High-Low Outlier": 40
+    }
+  },
+  "ehsa_fields": [
+    "OBJECTID",
+    "LOCATION",
+    "COUNTYID",
+    "CATEGORY",
+    "PATTERN",
+    "PERC_HOT",
+    "PERC_COLD",
+    "TREND_Z",
+    "TREND_P",
+    "TREND_BIN",
+    "SUM_VALUE",
+    "MIN_VALUE",
+    "MAX_VALUE",
+    "MEAN_VALUE",
+    "STD_VALUE",
+    "MED_VALUE",
+    "Shape_Length",
+    "Shape_Area"
+  ],
+  "loa_fields": [
+    "OBJECTID",
+    "LOCATION",
+    "COUNTYID",
+    "NUM_OUT",
+    "PERC_OUT",
+    "N_LOW_CLS",
+    "P_LOW_CLS",
+    "N_LOW_OUT",
+    "P_LOW_OUT",
+    "N_HIGH_CLS",
+    "P_HIGH_CLS",
+    "N_HIGH_OUT",
+    "P_HIGH_OUT",
+    "NO_SP_NBR",
+    "OUT_R_TIME",
+    "CO_TYPE",
+    "SUM_VALUE",
+    "MIN_VALUE",
+    "MAX_VALUE",
+    "MEAN_VALUE",
+    "STD_VALUE",
+    "MED_VALUE",
+    "Shape_Length",
+    "Shape_Area"
+  ]
+}

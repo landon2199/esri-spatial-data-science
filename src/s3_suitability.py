@@ -100,9 +100,9 @@ def raster_minmax(arcpy, r):
 
 def raster_array(arcpy, path):
     r = arcpy.Raster(path)
-    arr = arcpy.RasterToNumPyArray(r, nodata_to_value=np.nan).astype(float)
+    arr = arcpy.RasterToNumPyArray(r, nodata_to_value=-99999).astype(float)
     ext = r.extent
-    return np.ma.masked_invalid(arr), (ext.XMin, ext.XMax, ext.YMin, ext.YMax)
+    return np.ma.masked_where(arr <= -99998, arr), (ext.XMin, ext.XMax, ext.YMin, ext.YMax)
 
 
 def read_lines(fc, spatial_reference=None):
@@ -165,7 +165,7 @@ def main():
 
     v_min, v_max = raster_minmax(arcpy, str(C.SUIT_GDB / "Views_Zero"))
     t = sa.RescaleByFunction(str(C.SUIT_GDB / "Views_Zero"), sa.TfLogisticDecay(v_min, v_max, 99, v_min, 10, v_max, 1), 1, 10)
-    t.save(f"{gdb}/T_Views")
+    t.save(f"{gdb}/T_Views_Zero")
     transformed["Views_Zero"] = t
     criteria_rows.append({"submodel": "HQ_Building_Site", "criterion": "Views_Zero", "function": "LogisticDecay", "parameters": f"min {v_min:.0f}, max {v_max:.0f}, y-intercept 99 % (tool default)",
                           "weight": 1.0, "source": "course function (logistic decay, per the exercise); parameters default; weight assumption"})
@@ -264,7 +264,8 @@ def main():
     ax.set_xlim(fext[0], fext[1])
     ax.set_ylim(fext[2], fext[3])
     ax.set_axis_off()
-    ax.set_title("Headquarters suitability (1 = worst, 10 = best); black lines = major roads, dashed = Green Mountain ridge barrier")
+    ax.set_title("Headquarters suitability, Vermont study area (1 = least, 10 = most suitable)\n"
+                 "black lines = major roads, purple dashed = Green Mountain ridge barrier", fontsize=10)
     fig.colorbar(im, ax=ax, shrink=0.6, label="Suitability")
     fig.tight_layout()
     fig.savefig(C.FIG / "s3_suitability_map.png")
