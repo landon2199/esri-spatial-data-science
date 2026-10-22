@@ -246,60 +246,82 @@ def main():
     C.write_json(site, C.RES / "s3_suitability.json")
 
     # ---- 6. Figures ---------------------------------------------------------------
+    figures(arcpy, plt, gdb, criteria_rows)
+    C.log("Section 3 done")
+
+
+SUIT_CMAP = "RdYlBu"  # red = least suitable, blue = most; readable with red-green colour blindness
+SUBMODEL_TITLES = {"HQ_Building_Site": "Building site", "HQ_Energy_Independence": "Energy independence",
+                   "HQ_Access_to_Amenities": "Access to amenities", "HQ_Environmental_Concerns": "Environmental concerns"}
+CRITERION_TITLES = {
+    "LandUse": "Land use (lookup table)", "Slope": "Slope (MSSmall)", "Dist_MRoads": "Distance to major roads (Small)",
+    "Views_Zero": "Visibility from roads (LogisticDecay)", "Dist_Protect": "Distance to protected areas (LogisticGrowth)",
+    "Dist_Biol": "Distance to biological areas (MSLarge)", "Dist_Wetlands": "Distance to wetlands (Linear)",
+    "Dist_Streams": "Distance to streams (Large)", "Dist_Airport": "Distance to airport (Small)",
+    "Dist_Rec": "Distance to recreation sites (MSSmall)", "Dist_Resident": "Distance to residential areas (Linear, inverted)",
+    "Aspect": "Aspect, south-facing best (Gaussian)", "Dist_Elect": "Distance to electric corridors (Small)",
+    "Solar": "Solar radiation (Large)",
+}
+
+
+def figures(arcpy, plt, gdb, criteria_rows):
+    """Draw the Section 3 figures from the rasters in outputs/s3_suitability.gdb."""
+    from matplotlib.collections import LineCollection
+
     roads = read_lines(str(C.SUIT_GDB / "MajorRoads"))
     ridge = read_lines(str(C.SUIT_GDB / "GreenMTRidge"))
+    poly = f"{gdb}/Best_Region_poly"
     region_poly, _ = C.read_polygons(poly, ["gridcode"])
+    cen = next(arcpy.da.SearchCursor(poly, ["SHAPE@TRUECENTROID"]))[0]
     hs, ext = raster_array(arcpy, str(C.SUIT_GDB / "Hillshade"))
     fin, fext = raster_array(arcpy, f"{gdb}/HQ_Suitability")
-    from matplotlib.collections import LineCollection
 
     fig, ax = plt.subplots(figsize=(9, 8))
     ax.imshow(hs, cmap="gray", extent=ext, vmin=0, vmax=255)
-    im = ax.imshow(fin, cmap="RdYlGn", extent=fext, alpha=0.75, vmin=1, vmax=10)
+    im = ax.imshow(fin, cmap=SUIT_CMAP, extent=fext, alpha=0.75, vmin=1, vmax=10)
     ax.add_collection(LineCollection(roads, colors="#333333", linewidths=0.5))
-    ax.add_collection(LineCollection(ridge, colors="#7b3294", linewidths=1.2, linestyles="--"))
+    ax.add_collection(LineCollection(ridge, colors="#000000", linewidths=1.4, linestyles="--"))
     C.draw_paths(ax, region_poly, "none", edgecolor="#000000", linewidth=2)
-    ax.annotate("Best 2 km² region", xy=(cen[0][0], cen[0][1]), xytext=(20, 30), textcoords="offset points",
+    ax.annotate(f"Best {LOCATE_AREA_KM2:g} km² region", xy=(cen[0], cen[1]), xytext=(20, 30), textcoords="offset points",
                 fontsize=9, fontweight="bold", arrowprops={"arrowstyle": "->"})
     ax.set_xlim(fext[0], fext[1])
     ax.set_ylim(fext[2], fext[3])
     ax.set_axis_off()
     ax.set_title("Headquarters suitability, Vermont study area (1 = least, 10 = most suitable)\n"
-                 "black lines = major roads, purple dashed = Green Mountain ridge barrier", fontsize=10)
-    fig.colorbar(im, ax=ax, shrink=0.6, label="Suitability")
+                 "solid black = major roads, dashed black = Green Mountain ridge barrier", fontsize=10)
+    fig.colorbar(im, ax=ax, shrink=0.6, label="Suitability (1-10)")
     fig.tight_layout()
     fig.savefig(C.FIG / "s3_suitability_map.png")
     plt.close(fig)
 
     names = list(SUBMODEL_WEIGHTS)
-    fig, axes = plt.subplots(2, 2, figsize=(10, 9))
+    fig, axes = plt.subplots(2, 2, figsize=(10, 9), layout="constrained")
     for ax, model in zip(axes.ravel(), names):
         arr, e = raster_array(arcpy, f"{gdb}/{model}_1to10")
         ax.imshow(hs, cmap="gray", extent=ext, vmin=0, vmax=255)
-        ax.imshow(arr, cmap="RdYlGn", extent=e, alpha=0.75, vmin=1, vmax=10)
-        ax.set_title(model.replace("HQ_", "").replace("_", " "))
+        im = ax.imshow(arr, cmap=SUIT_CMAP, extent=e, alpha=0.75, vmin=1, vmax=10)
+        ax.set_title(SUBMODEL_TITLES.get(model, model))
         ax.set_axis_off()
-    fig.suptitle("Submodels rescaled to 1-10")
-    fig.tight_layout()
-    fig.savefig(C.FIG / "s3_submodels.png")
+    fig.colorbar(im, ax=axes, shrink=0.5, label="Suitability (1-10)")
+    fig.suptitle("Submodels rescaled to 1-10 (equal weights in the final model)")
+    fig.savefig(C.FIG / "s3_submodels.png", bbox_inches="tight")
     plt.close(fig)
 
     crit_names = [r["criterion"] for r in criteria_rows]
     n = len(crit_names)
     cols = 4
     rows_n = int(np.ceil(n / cols))
-    fig, axes = plt.subplots(rows_n, cols, figsize=(12, 2.9 * rows_n))
+    fig, axes = plt.subplots(rows_n, cols, figsize=(12, 2.9 * rows_n), layout="constrained")
     for ax, crit in zip(axes.ravel(), crit_names):
         arr, e = raster_array(arcpy, f"{gdb}/T_{crit}")
-        ax.imshow(arr, cmap="RdYlGn", extent=e, vmin=1, vmax=10)
-        fn = next(r["function"] for r in criteria_rows if r["criterion"] == crit)
-        ax.set_title(f"{crit} ({fn})", fontsize=8)
+        im = ax.imshow(arr, cmap=SUIT_CMAP, extent=e, vmin=1, vmax=10)
+        ax.set_title(CRITERION_TITLES.get(crit, crit), fontsize=8)
         ax.set_axis_off()
     for ax in axes.ravel()[n:]:
         ax.set_axis_off()
-    fig.suptitle("Transformed criteria (1 = least suitable, 10 = most)")
-    fig.tight_layout()
-    fig.savefig(C.FIG / "s3_criteria_grid.png")
+    fig.colorbar(im, ax=axes.ravel()[n:].tolist() or axes.ravel().tolist(), shrink=0.6, label="Suitability (1-10)")
+    fig.suptitle("Transformed criteria (1 = least suitable, 10 = most); top row = building-site submodel (assumed weights)")
+    fig.savefig(C.FIG / "s3_criteria_grid.png", bbox_inches="tight")
     plt.close(fig)
 
     # Barrier effect figure
@@ -312,11 +334,22 @@ def main():
         ax.add_collection(LineCollection(ridge, colors="#00e5ff", linewidths=1.0, linestyles="--"))
         ax.set_title(ttl, fontsize=9)
         ax.set_axis_off()
-    fig.colorbar(im, ax=axes, shrink=0.7, label="km")
+    fig.colorbar(im, ax=axes, shrink=0.7, label="Distance to major roads (km)")
     fig.savefig(C.FIG / "s3_distance_barrier.png", bbox_inches="tight")
     plt.close(fig)
-    C.log("Section 3 done")
+
+
+def figures_only():
+    """Redraw the figures from results/s3_criteria.csv and the existing geodatabase."""
+    import csv
+
+    arcpy = C.import_arcpy()
+    plt = C.setup_matplotlib()
+    with open(C.RES / "s3_criteria.csv", encoding="utf-8", newline="") as f:
+        criteria_rows = list(csv.DictReader(f))
+    figures(arcpy, plt, str(C.OUT / "s3_suitability.gdb"), criteria_rows)
+    C.log("Section 3 figures redrawn")
 
 
 if __name__ == "__main__":
-    main()
+    figures_only() if "--figures-only" in sys.argv else main()

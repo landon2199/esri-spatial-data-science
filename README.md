@@ -1,6 +1,14 @@
 # Esri Spatial Data Science MOOC, rebuilt in ArcPy
 
-Four of the five sections of Esri's MOOC *Spatial Data Science: The New Frontier in Analytics* (Fall 2026), redone as scripts against the course's own exercise data with ArcGIS Pro 3.7 and ArcPy. The MOOC teaches each step by clicking through ArcGIS Pro; this repo makes every step reproducible, keeps every tool's messages, and adds the checks the course leaves out (a spatially blocked validation, a comparison of neighbourhood definitions, an explicit list of which model parameters came from the course and which are assumptions).
+Four of the five sections of Esri's MOOC *Spatial Data Science: The New Frontier in Analytics* (Fall 2026), redone as ArcPy scripts against the course's own exercise data in ArcGIS Pro 3.7. The MOOC teaches each step by clicking through Pro; this repo makes every step reproducible, keeps every tool's messages, and adds the checks the course leaves out.
+
+## Key findings
+
+All numbers come from `results/*.json|csv`, written by the scripts in `src/`. Random draws (forest validation splits, permutations) are seeded through `arcpy.env.randomGenerator`, so a rerun gives the same numbers.
+
+- **The course's validation overstates how well its turnout model transfers.** The refined forest-based regression scores a mean validation R² of **0.76** on the course's random 10 % hold-outs. Holding out whole states instead (leave-one-state-out) drops it to **0.58** pooled, and to **−0.48 for Iowa**, the one state the course then downscales to. Neighbouring counties share state law, a regional economy and the statewide margin, so a random split tests interpolation, not transfer.
+- **The neighbourhood definition decides the hot-spot map.** With the tool's default fixed distance band (146 km, set by the sparsest county in the West, mean 37 neighbours) Gi* marks **1,912 of 3,105** counties as significant SNAP hot or cold spots; with polygon contiguity (mean 6 neighbours) it marks **759**. The two never disagree on direction, but the default smooths the local pattern over whole regions.
+- **The course numbers reproduce.** Join counts (3,115 and 3,112 matches), the one Louisiana null, and the three suitability submodels whose weights are stored in the course's `.sam` file (two ranges match exactly, the third to within 0.12) all come out as the course says, which is the check that the rebuild is faithful before the extra analyses are added.
 
 | Section | Topic | Data | Status |
 |---|---|---|---|
@@ -10,11 +18,19 @@ Four of the five sections of Esri's MOOC *Spatial Data Science: The New Frontier
 | 4 | Pattern detection and space-time mining: SNAP participation 2010–2019 | 3,105 counties × 10 years | done |
 | 5 | Deep learning (object detection) | not downloaded | out of scope: separate data download and GPU training time |
 
-Everything below comes from `results/*.json|csv`, written by the scripts in `src/`. Random draws (forest validation splits, permutations) are seeded through `arcpy.env.randomGenerator`, so rerunning gives the same numbers.
+## Skills shown
+
+- **ArcPy** end to end: geoprocessing, `arcpy.da` cursors, `arcpy.mp` layouts built headlessly, tool-message parsing, seeded random generators.
+- **Spatial Statistics**: Hot Spot Analysis (Gi*), Cluster and Outlier Analysis (Local Moran's I), FDR correction, neighbourhood conceptualizations.
+- **Spatial Analyst**: Surface Parameters, Distance Accumulation with barriers, Rescale by Function, Reclassify, map algebra, Locate Regions; the Suitability Modeler rebuilt from its saved `.sam` file.
+- **Space-time cubes**: Create Space Time Cube From Defined Locations, Emerging Hot Spot Analysis, Local Outlier Analysis.
+- **Forest-based regression**: Forest-based and Boosted Classification and Regression, repeated validation, variable importance, distance features, prediction to other features with variable matching, range diagnostics.
+- **Spatial cross-validation**: leave-one-state-out blocking written on top of the Esri tool, compared with the random hold-out.
+- Data engineering and QA: Validate Join, null diagnosis, reimplementing a course script tool null-safe, matplotlib figures from `arcpy.da`.
 
 ## Section 1 — Data engineering
 
-**What the course asks.** Join citizen voting-age population (CVAP) to county presidential returns, find and explain the records that fail to join, derive per-year fields (major-party votes, raw and percentage margins, turnout, winner), validate turnout, and join the table to county geometry.
+**What the course asks.** Join citizen voting-age population (CVAP) to county presidential returns, explain the records that fail to join, derive per-year fields (major-party votes, margins, turnout, winner), validate turnout, and join the table to county geometry.
 
 **Method** (`src/s1_data_engineering.py`): Validate Join → Join Field on `FIPS_txt` ← `FIPS`; null diagnosis by state; Delete Rows for Alaska; a null-safe reimplementation of the course's "Multi-Year Calculate Field" script tool; cap turnout at 1; Join Field onto `US_Counties`.
 
@@ -30,7 +46,7 @@ Everything below comes from `results/*.json|csv`, written by the scripts in `src
 | Turnout > 1, capped to 1 | **6 (2008), 2 (2012), 4 (2016), 13 (2020)**: 25 county-years | |
 | County polygons matched | **3,112 of 3,112** | 3,112 |
 
-Why Alaska fails: the returns are reported by state legislative district (`02001`, `02002`, …), not by borough or census area, so there is nothing to join CVAP to. Why turnout exceeds 1: CVAP is a 5-year American Community Survey average while the votes are counted on one day; in the capped counties (Loving TX, 40 CVAP; Kenedy TX, 90; Daggett UT, 375 …) sampling error and population change easily exceed the gap. Capping is the course's choice; dropping them would leave holes in the map, keeping them would put impossible values into the models.
+Alaska fails because its returns are reported by state legislative district (`02001`, `02002`, …), not by borough, so there is nothing to join CVAP to. Turnout exceeds 1 because CVAP is a 5-year American Community Survey average while votes are counted on one day; in the capped counties (Loving TX, 40 CVAP; Kenedy TX, 90; Daggett UT, 375 …) sampling error and population change easily exceed the gap. Capping is the course's choice: dropping them would leave holes in the map, keeping them would put impossible values into the models.
 
 Turnout by year after cleaning (`results/s1_turnout_summary_by_year.csv`): mean 0.607 (2008), 0.581 (2012), 0.591 (2016), **0.659 (2020)**.
 
@@ -62,15 +78,15 @@ Turnout by year after cleaning (`results/s1_turnout_summary_by_year.csv`): mean 
 | M1 baseline (median age, per-capita income, bachelor's %) | 3 | 0.50 (0.40–0.67) | 41.1 |
 | M2 many variables | 22 | 0.77 (0.70–0.85) | 66.7 |
 | M3 many + distance to cities | 22 + 6 | **0.77 (0.67–0.87)** | 66.8 |
-| M4 refined (importance ≥ 3 %) | 12 + 1 (Cities5) | 0.76 (0.70–0.85) | 67.8 |
+| M4 refined (importance ≥ 3 %) | 12 + 1 (Cities5) | 0.76 (0.70–0.84) | 67.8 |
 | National 2020, baseline | 3 | 0.49 (0.45–0.53) | 44.2 |
 | National 2020, 16 variables | 16 | 0.65 (0.61–0.68) | 60.4 |
 
-The refined model keeps per-capita income (highest importance), share without a high-school diploma, poverty, median age, the statewide margin (`state_votes_pcnt_diff`), never-married share, GED share, population 18+ and 65–69, the diversity index, savings, a psychographic variable and distance to the largest cities (`Cities5`); the full table is `results/s2_variable_importance.csv`. The min–max range across the 10 runs is wide (about 0.15 R² for M2–M4): a single validation split would have been misleading either way.
+The refined model keeps per-capita income (highest importance), share without a high-school diploma, poverty, median age, the statewide margin (`state_votes_pcnt_diff`), never-married share, GED share, population 18+ and 65–69, the diversity index, savings, a psychographic variable and distance to the largest cities (`Cities5`); the full table is `results/s2_variable_importance.csv`. The min–max spread across the 10 runs is wide (0.14–0.20 R² for M2–M4): a single validation split would have been misleading either way.
 
-**Downscaling.** Predicted tract turnout in Iowa ranges 0.42–0.76 (mean 0.648; `results/s2_prediction.json`). The tool's *Explanatory Variable Range Diagnostics* flag **10 of 13 variables** as extrapolating (`+`, share > 1: the tract values reach outside the county training range; e.g. per-capita income spans $5,132–$67,796 in tracts vs $9,395–$45,791 in counties). Tract predictions in those ranges are extrapolations of a tree model, which can only repeat the nearest training leaf. `results/s2_range_diagnostics.csv` has every row.
+**Downscaling.** Predicted tract turnout in Iowa ranges 0.42–0.76 (mean 0.648; `results/s2_prediction.json`). The tool's *Explanatory Variable Range Diagnostics* flag **10 of 13 variables** as extrapolating (`+`: the tract values reach outside the county training range; e.g. per-capita income spans $5,132–$67,796 in tracts vs $9,395–$46,933 in counties). Tract predictions in those ranges are extrapolations of a tree model, which can only repeat the nearest training leaf. `results/s2_range_diagnostics.csv` has every row.
 
-**Honest extra: spatially blocked validation.** A random 10 % hold-out leaves every held-out county surrounded by training counties, and neighbouring counties share the things the model learns (state law, regional economy, the statewide margin, which is constant within a state). Holding out whole states instead (`leave_one_state_out()`, same refined variable set, same settings):
+**Extra: spatially blocked validation.** A random 10 % hold-out leaves every held-out county surrounded by training counties, and neighbouring counties share what the model learns (state law, regional economy, the statewide margin, which is constant within a state). Holding out whole states instead (`leave_one_state_out()`, same refined variable set, same settings):
 
 | Validation | R² |
 |---|---|
@@ -79,7 +95,7 @@ The refined model keeps per-capita income (highest importance), share without a 
 | Leave-one-state-out, mean of the 8 per-state R² | 0.33 |
 | Per state | IL 0.46, IA −0.48, KS 0.25, MN 0.29, MO 0.37, NE 0.58, SD 0.61, WI 0.56 |
 
-Iowa itself is the worst case (negative R²: the model predicts a lower mean, 0.63 vs 0.67 observed, and no within-state structure), which is awkward because Iowa is exactly the state the course downscales to. The within-state R² falls because the model's biggest single signal, the statewide margin, cannot separate counties inside one state. The random split overstates how well this model would transfer to new places.
+Iowa is the worst case (negative R²: the model predicts a lower mean, 0.63 vs 0.67 observed, and none of the within-state structure), which is awkward because Iowa is exactly the state the course downscales to. Within-state R² falls because the model's biggest single signal, the statewide margin, cannot separate counties inside one state.
 
 | Validation R² by model | Spatially blocked check |
 |---|---|
@@ -103,9 +119,9 @@ Iowa itself is the worst case (negative R²: the model predicts a lower mean, 0.
 
 The check that the rebuild is faithful: the weighted sums reproduce the ranges of the course's own output rasters in `Headquarters_Siting.gdb` (`results/s3_submodel_ranges.csv`): Environmental 5.70–37.00 vs course 5.70–37.00; Energy 4.95–48.16 vs 4.95–48.16; Amenities 5.74–33.50 vs 5.62–33.50 (the minimum differs slightly, most likely a mask/extent difference).
 
-The **building-site submodel** is not in the .sam, so its values are mine and are marked `assumption` in `results/s3_criteria.csv`: land-use lookup (developed and open land 7–10, forest 3, wetlands and water 1), slope MSSmall, distance to major roads Small, views LogisticDecay (the course's function; the tool-default 99 % intercept), all four weighted 1.0. The final model rescales each submodel linearly to 1–10 and averages them with equal weights (assumption), and Locate Regions asks for one circular 2 km² region by highest average value (the .sam only holds the dialog default of 338.56 km², which is 10 % of the extent and not a plausible site).
+The **building-site submodel** is not in the .sam, so its values are mine and are marked `assumption` in `results/s3_criteria.csv`: land-use lookup (developed and open land 7–10, forest 3, wetlands and water 1), slope MSSmall, distance to major roads Small, and visibility from roads with **LogisticDecay**, the function the course specifies: the more visible a site is from the roads, the less preferred it is, so suitability falls as visibility rises (tool-default 99 % intercept). All four are weighted 1.0. The final model rescales each submodel linearly to 1–10 and averages them with equal weights (assumption), and Locate Regions asks for one circular 2 km² region by highest average value (the .sam only holds the dialog default of 338.56 km², which is 10 % of the extent and not a plausible site).
 
-**Results** (`results/s3_suitability.json`): final surface 2.21–8.64 (mean 5.61). The best 2 km² region is at 44.566° N, 73.064° W (Chittenden County, north-east of Burlington), mean suitability 7.71, with submodel means Building site 8.43, Energy 7.75, Amenities 7.69, Environment 6.96. Two course choices are worth noticing in the criteria grid: with midpoints at half the data range, the *Large* functions on distance to streams and protected areas score nearly the whole study area 1–3, so those two criteria mostly act as a penalty on the few far-away cells.
+**Results** (`results/s3_suitability.json`): final surface 2.21–8.64 (mean 5.61). The best 2 km² region is at 44.566° N, 73.064° W (Chittenden County, north-east of Burlington), mean suitability 7.71, with submodel means Building site 8.43, Energy 7.75, Amenities 7.69, Environment 6.96. One course choice stands out in the criteria grid: with midpoints at half the data range, the *Large* functions on distance to streams and protected areas score nearly the whole study area 1–3, so those two criteria mostly act as a penalty on the few far-away cells.
 
 ![suitability](figures/s3_suitability_map.png)
 ![criteria](figures/s3_criteria_grid.png)
@@ -126,23 +142,24 @@ More: `figures/s3_submodels.png`, `figures/s3_distance_barrier.png` (what the ri
 | Not significant | 1,193 | 2,346 |
 | Cold spot (90/95/99 %) | 1,014 (127 / 202 / 685) | 353 (141 / 192 / 20) |
 
-The two agree on direction wherever both are significant (no county is hot in one and cold in the other), but the 146 km band pulls 1,164 more counties into significance: with 37 neighbours the local mean is smoothed over whole regions (the entire South, Appalachia, New Mexico; the Upper Midwest and Mountain West as cold). Contiguity keeps the pattern local: the Mississippi Delta, eastern Kentucky, southern New Mexico and the Rio Grande counties as hot spots. Local Moran's I (contiguity, FDR): 272 High-High, 368 Low-Low, 14 High-Low and 13 Low-High counties.
+The two agree on direction wherever both are significant (no county is hot in one and cold in the other), but the 146 km band pulls 1,153 more counties into significance: with 37 neighbours the local mean is smoothed over whole regions (the entire South, Appalachia, New Mexico; the Upper Midwest and Mountain West as cold). Contiguity keeps the pattern local: the Mississippi Delta, eastern Kentucky, southern New Mexico and the Rio Grande counties as hot spots. Local Moran's I (contiguity, FDR; `results/s4_lisa_counts.csv`): 281 High-High, 392 Low-Low, 15 High-Low and 17 Low-High counties.
 
 Space-time: EHSA finds hot or cold spot trends in 1,242 of 3,105 counties. Cold-spot categories dominate (580 Consecutive, 180 Intensifying, 97 New, 68 Sporadic, 26 Persistent, 1 Diminishing), consistent with SNAP participation falling over the decade; hot spots are mostly **Diminishing (145)** or **Persistent (101)** (the Delta, Appalachia, New Mexico, the Rio Grande), with 27 Consecutive, 12 Intensifying and 5 Sporadic. Local Outlier Analysis: 725 counties were only ever High-High clusters, 1,107 only Low-Low, 40 High-Low, 60 Low-High, 92 of several types, 1,081 never significant.
 
 ![hotspots](figures/s4_hotspots_lisa.png)
 ![spacetime](figures/s4_spacetime.png)
 
-## What I would do differently, and caveats
+## Caveats, and what I would do differently
 
 - **Spatial cross-validation should be the default.** The course's validation (random hold-out, repeated) answers "how well does the model interpolate between neighbours", not "how well does it transfer". Leave-one-state-out drops R² from 0.76 to 0.58 pooled and to negative in Iowa. A model meant to downscale to Iowa tracts should be validated by holding Iowa out.
-- **Downscaling is extrapolation.** Ten of thirteen explanatory variables take values in tracts that no county reaches. The tool says so in its range diagnostics; the course glosses over it.
+- **Downscaling is extrapolation.** Ten of thirteen explanatory variables take values in tracts that no county reaches. The tool says so in its range diagnostics; the course does not dwell on it.
 - **MAUP.** Every result here is a county result. Turnout, SNAP rates and hot spots would change with different units (the Alaska districts are the extreme case: the units do not even match). Tract-level predictions from a county model add the ecological-inference problem on top.
 - **5-year CVAP vs one election day.** Turnout denominators are a 5-year survey average centred roughly two years before the election; in small counties the resulting error can exceed 10 % (25 county-years go above 1). Capping at 1 is a repair, not a fix; a vintage-matched population estimate would be better.
 - **Neighbourhood choice drives Gi*.** The default distance band is set by the sparsest county in the West, which over-smooths the East. For polygons of very different sizes, contiguity or a k-nearest-neighbours definition is more defensible than one distance.
 - **No FDR in the space-time tools**, so the EHSA/LOA counts are the uncorrected versions of 3,105 (× 10) tests and are optimistic.
-- **Suitability weights are opinions.** Only three of the four submodels have the course's weights; the final combination is an equal-weight assumption. A sensitivity run (vary each weight ±50 %, see whether the best region moves) is the natural next step and is easy with these scripts.
+- **Suitability weights are opinions.** Only three of the four submodels have the course's weights; the building-site weights, the land-use lookup and the equal-weight final combination are mine. A sensitivity run (vary each weight ±50 %, see whether the best region moves) is the natural next step and is easy with these scripts.
 - **The 2 km² region** is my choice of size; a real siting brief would specify the footprint.
+- **Two course steps are not scripted.** Section 5 (deep learning) is not reproduced, and the cube is not visualized in 3D (that is a Pro view, not a tool).
 
 ## Run it
 
@@ -151,6 +168,7 @@ Requires ArcGIS Pro 3.7 (Advanced) with Spatial Analyst, and the course's exerci
 ```
 "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_all.py        # all four sections, ~15 min
 "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_all.py s4     # one section
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" src/s3_suitability.py --figures-only   # redraw figures from existing outputs (s2, s3, s4)
 ```
 
 Outputs: `outputs/*.gdb` and the space-time cube (ignored by git), `outputs/logs/` (every tool's messages), `results/` (metrics as CSV/JSON), `figures/` (PNG). `COURSE_NOTES.md` maps each script function to the MOOC exercise steps.

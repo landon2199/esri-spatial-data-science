@@ -174,8 +174,20 @@ def main():
     C.write_json(summary, C.RES / "s4_patterns.json")
 
     # ---- Maps --------------------------------------------------------------------------
+    figures(arcpy, plt, gdb, summary)
+    C.log("Section 4 done")
+
+
+def figures(arcpy, plt, gdb, summary):
+    """Draw the Section 4 maps from outputs/s4_patterns.gdb and the summary written to results/s4_patterns.json."""
+    import numpy as np
     from matplotlib.patches import Patch
 
+    counties, hs_fixed, hs_cont = f"{gdb}/Counties", f"{gdb}/HotSpots_fixed", f"{gdb}/HotSpots_contiguity"
+    lisa, ehsa, loa = f"{gdb}/ClustersOutliers_contiguity", f"{gdb}/EmergingHotSpots", f"{gdb}/LocalOutliers"
+    pat_col = next(c for c in summary["ehsa_fields"] if c.upper() == "PATTERN")
+    cat_col = next(c for c in summary["loa_fields"] if c.upper() == "CO_TYPE")
+    ehsa_counts, loa_counts = summary["counts"]["ehsa"], summary["counts"]["loa"]
     sr = arcpy.Describe(counties).spatialReference
     state_paths, _ = C.read_polygons(STATES, ["STATE_ABBR"], spatial_reference=sr)
     paths_f, dff = C.read_polygons(hs_fixed, ["Gi_Bin"])
@@ -192,8 +204,6 @@ def main():
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 9))
     ax = axes[0, 0]
-    import numpy as np
-
     v = dfr[RATE_FIELD].astype(float).values
     cmap = plt.get_cmap("YlOrRd")
     norm = plt.Normalize(0, np.nanpercentile(v, 99))
@@ -214,7 +224,7 @@ def main():
     legend(ax, [("High-High cluster", C.LISA_COLORS["HH"]), ("High-Low outlier", C.LISA_COLORS["HL"]), ("Low-High outlier", C.LISA_COLORS["LH"]),
                 ("Low-Low cluster", C.LISA_COLORS["LL"]), ("Not significant", C.LISA_COLORS[""])], "Cluster/outlier type")
     fig.tight_layout()
-    fig.savefig(C.FIG / "s4_hotspots_lisa.png")
+    fig.savefig(C.FIG / "s4_hotspots_lisa.png", bbox_inches="tight")
     plt.close(fig)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6.2))
@@ -233,10 +243,19 @@ def main():
     legend(ax, [(f"{p} ({int(loa_counts.get(p, 0))})", LOA_COLORS[p]) for p in present], "Category (counties)",
            loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=3)
     fig.tight_layout()
-    fig.savefig(C.FIG / "s4_spacetime.png")
+    fig.savefig(C.FIG / "s4_spacetime.png", bbox_inches="tight")
     plt.close(fig)
-    C.log("Section 4 done")
+
+
+def figures_only():
+    import json
+
+    arcpy = C.import_arcpy()
+    plt = C.setup_matplotlib()
+    summary = json.loads((C.RES / "s4_patterns.json").read_text(encoding="utf-8"))
+    figures(arcpy, plt, str(C.OUT / "s4_patterns.gdb"), summary)
+    C.log("Section 4 figures redrawn")
 
 
 if __name__ == "__main__":
-    main()
+    figures_only() if "--figures-only" in sys.argv else main()

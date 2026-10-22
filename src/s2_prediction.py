@@ -63,6 +63,32 @@ MANY = {
     "voter_laws": "voter_laws",
 }
 CATEGORICAL = {"voter_laws"}
+# Readable names for the figures (field aliases from the course layers)
+LABELS = {
+    "gender_medage_cy": "Median age",
+    "householdincome_pci_cy": "Per-capita income",
+    "educationalattainment_nohs_cy_p": "Less than 9th grade (%)",
+    "educationalattainment_somehs_cy_p_1": "No high-school diploma (%)",
+    "educationalattainment_hsgrad_cy_p": "High-school graduate (%)",
+    "educationalattainment_ged_cy_p": "GED (%)",
+    "educationalattainment_smcoll_cy_p": "Some college (%)",
+    "educationalattainment_asscdeg_cy_p": "Associate degree (%)",
+    "educationalattainment_bachdeg_cy_p": "Bachelor's degree (%)",
+    "educationalattainment_graddeg_cy_p": "Graduate degree (%)",
+    "maritalstatustotals_nevmarr_cy_p": "Never married (%)",
+    "F5yearincrements_pop18up_cy": "Population 18+",
+    "F5yearincrements_pop65_cy_p": "Age 65-69 (%)",
+    "F5yearincrements_pop70_cy_p": "Age 70-74 (%)",
+    "F5yearincrements_pop75_cy_p": "Age 75-79 (%)",
+    "raceandhispanicorigin_divindx_cy": "Diversity index",
+    "households_acshhbpov_p": "Households below poverty (%)",
+    "psychographicsadvertising_mp28001a_b_p": "'Buying American not important' (%)",
+    "financial_x14060_x_a": "Avg. checking/savings value",
+    "financial_x14058_x_a": "Financial variable X14058 (avg.)",
+    "state_votes_pcnt_diff": "Statewide margin",
+    "voter_laws": "Voter laws (categorical)",
+    "Cities5": "Distance to largest cities (Cities5)",
+}
 NATIONAL_BASE = ["gender_MEDAGE_CY", "householdincome_PCI_CY", "educationalattainment_BACHDEG_CY_P"]
 NATIONAL_MANY = NATIONAL_BASE + [
     "educationalattainment_SOMEHS_CY_P", "households_ACSHHBPOV_P", "disposableincome_AVGDI_CY",
@@ -224,10 +250,10 @@ def figures(arcpy, plt, models, loso_rows, loso_pooled, gdb, refined_vars):
     imp = ref["importance_mean"]
     fig, ax = plt.subplots(figsize=(7, 0.3 * len(imp) + 1.2))
     keys = list(imp.keys())[::-1]
-    ax.barh(keys, [imp[k] for k in keys], color="#7a9cc6")
-    ax.set_xlabel("Mean variable importance (10 runs)")
-    ax.set_title("Refined model: variable importance")
-    ax.tick_params(axis="y", labelsize=7)
+    ax.barh([LABELS.get(k, k) for k in keys], [imp[k] for k in keys], color="#7a9cc6")
+    ax.set_xlabel("Variable importance (Gini-based, mean of 10 runs)")
+    ax.set_title("Refined model (M4): variable importance")
+    ax.tick_params(axis="y", labelsize=8)
     fig.tight_layout()
     fig.savefig(C.FIG / "s2_importance.png")
     plt.close(fig)
@@ -264,7 +290,21 @@ def figures(arcpy, plt, models, loso_rows, loso_pooled, gdb, refined_vars):
     plt.close(fig)
 
 
+def figures_only():
+    """Redraw the figures from results/s2_prediction.json and the existing geodatabase."""
+    import json
+
+    arcpy = C.import_arcpy()
+    plt = C.setup_matplotlib()
+    res = json.loads((C.RES / "s2_prediction.json").read_text(encoding="utf-8"))
+    figures(arcpy, plt, res["models"], res["spatial_cv"]["by_state"], res["spatial_cv"]["pooled_r2"],
+            str(C.OUT / "s2_prediction.gdb"), res["refined_variables"])
+    C.log("Section 2 figures redrawn")
+
+
 def main():
+    if "--figures-only" in sys.argv:
+        return figures_only()
     arcpy = C.import_arcpy()
     plt = C.setup_matplotlib()
     gdb = C.ensure_gdb("s2_prediction")
