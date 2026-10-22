@@ -1,2 +1,5 @@
-submodel,weight_sum,my_min,my_max
-HQ_Building_Site,4.0,16.288,40.0
+submodel,weight_sum,my_min,my_max,course_min,course_max
+HQ_Building_Site,4.0,16.288,40.0,,
+HQ_Environmental_Concerns,5.7,5.7,37.003,5.7,37.003
+HQ_Access_to_Amenities,3.35,5.736,33.5,5.617,33.5
+HQ_Energy_Independence,4.85,4.951,48.16,4.951,48.16

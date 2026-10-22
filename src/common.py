@@ -57,6 +57,8 @@ def import_arcpy():
 
     arcpy.env.overwriteOutput = True
     arcpy.env.addOutputsToMap = False
+    # Fixed seed for tools that draw random numbers (Forest validation splits, permutations)
+    arcpy.env.randomGenerator = "20261022 ACM599"
     log(f"arcpy {arcpy.GetInstallInfo()['Version']} imported in {time.time() - t0:.0f} s")
     return arcpy
 
@@ -70,10 +72,9 @@ def ensure_gdb(name: str) -> str:
         arcpy.management.CreateFileGDB(str(OUT), f"{name}.gdb")
     # Give each section its own scratch workspace so sections can run side by side
     # (several tools write temporary tables to arcpy.env.scratchGDB).
-    scratch = OUT / f"scratch_{name}.gdb"
-    if not arcpy.Exists(str(scratch)):
-        arcpy.management.CreateFileGDB(str(OUT), f"scratch_{name}.gdb")
-    arcpy.env.scratchWorkspace = str(scratch)
+    scratch = OUT / f"scratch_{name}"
+    scratch.mkdir(exist_ok=True)
+    arcpy.env.scratchWorkspace = str(scratch)  # arcpy.env.scratchGDB becomes <scratch>/scratch.gdb
     return str(path)
 
 

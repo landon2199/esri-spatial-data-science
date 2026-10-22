@@ -1,0 +1,8 @@
+Gi_Bin,class,fixed_distance,contiguity
+-3,"Cold spot, 99%",685,20
+-2,"Cold spot, 95%",202,192
+-1,"Cold spot, 90%",127,141
+0,Not significant,1193,2346
+1,"Hot spot, 90%",77,77
+2,"Hot spot, 95%",132,125
+3,"Hot spot, 99%",689,204

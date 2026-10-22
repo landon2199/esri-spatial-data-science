@@ -93,6 +93,11 @@ def choropleth(plt, paths, df, state_paths):
         else:
             labels.append(f"{lo:+.1f} to {hi:+.1f} SD")
     handles = [Patch(facecolor=colors[i], edgecolor="#999999", label=labels[i]) for i in range(len(labels))]
+    # Clip to the contiguous states (the county layer also holds Hawaii)
+    xs = np.concatenate([p.vertices[:, 0] for p in state_paths])
+    ys = np.concatenate([p.vertices[:, 1] for p in state_paths])
+    ax.set_xlim(xs.min() - 5e4, xs.max() + 5e4)
+    ax.set_ylim(ys.min() - 5e4, ys.max() + 5e4)
     ax.legend(handles=handles, loc="lower left", fontsize=7, frameon=False, title=f"Turnout 2020\nmean {mean:.3f}, SD {sd:.3f}", title_fontsize=7)
     ax.set_title("Voter turnout 2020 by county, standard-deviation classes (1 SD, tails capped at ±2.5 SD)")
     fig.tight_layout()
@@ -185,13 +190,13 @@ def pro_layout(arcpy, breaks):
         brk.symbol.outlineColor = {"RGB": [255, 255, 255, 60]}
         brk.symbol.outlineWidth = 0.1
     lyr.symbology = sym
-    for sl in m.listLayers("US_States"):
-        ssym = sl.symbology
-        ssym.renderer.symbol.applySymbolFromGallery("Extent Transparent Wide Gray")
-        ssym.renderer.symbol.color = {"RGB": [0, 0, 0, 0]}
-        ssym.renderer.symbol.outlineColor = {"RGB": [60, 60, 60, 100]}
-        ssym.renderer.symbol.outlineWidth = 0.6
-        sl.symbology = ssym
+    # States as hollow outlines underneath the counties
+    m.moveLayer(states_lyr, lyr, "BEFORE")
+    ssym = states_lyr.symbology
+    ssym.renderer.symbol.color = {"RGB": [0, 0, 0, 0]}
+    ssym.renderer.symbol.outlineColor = {"RGB": [60, 60, 60, 100]}
+    ssym.renderer.symbol.outlineWidth = 0.6
+    states_lyr.symbology = ssym
     lyt = aprx.createLayout(11, 8.5, "INCH", "Turnout 2020 layout")
     mf = lyt.createMapFrame(arcpy.Polygon(arcpy.Array([arcpy.Point(0.3, 0.9), arcpy.Point(0.3, 7.9),
                                                        arcpy.Point(10.7, 7.9), arcpy.Point(10.7, 0.9)])), m, "Map Frame")
