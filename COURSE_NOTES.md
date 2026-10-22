@@ -9,7 +9,7 @@ Run everything from the ArcGIS Pro Python environment:
 "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_all.py s2       # one section
 ```
 
-Each script writes its ArcGIS outputs to `outputs/<section>.gdb`, every tool's messages to `outputs/logs/`, metric tables to `results/`, and figures to `figures/`.
+Each script writes its ArcGIS outputs to `outputs/<section>.gdb`, every tool's messages to `outputs/logs/`, metric tables to `results/`, and figures to `figures/`. `src/s2_prediction.py`, `src/s3_suitability.py` and `src/s4_patterns_spacetime.py` accept `--figures-only`, which redraws the figures from the existing `results/` and `outputs/` without rerunning any tool.
 
 ## Section 1 — Data engineering (`src/s1_data_engineering.py`)
 
@@ -65,7 +65,7 @@ The course's `ElectionPartyVotes.ipynb` computes `state_votes_pcnt_diff` (statew
 | Final model | Suitability Modeler with submodels as criteria | linear rescale of each submodel to 1–10, equal weights | `HQ_Suitability`, `figures/s3_submodels.png` |
 | Locate | Suitability Modeler → Locate (Locate Regions) | `sa.LocateRegions(final, 2, "SQUARE_KILOMETERS", 1, "CIRCLE", 0, 50, "HIGHEST_AVERAGE_VALUE")` | `Best_Region`, `results/s3_suitability.json`, `figures/s3_suitability_map.png` |
 
-`Suitability.sam` is the course's saved Suitability Modeler state. `read_sam()` pulls the transformation function, its parameters and the weight for every criterion of the three submodels it stores; those are used verbatim. The Building Site submodel and the final combination are not in the file, so their values are flagged `assumption` in `results/s3_criteria.csv`.
+`Suitability.sam` is the course's saved Suitability Modeler state. `read_sam()` pulls the transformation function, its parameters and the weight for every criterion of the three submodels it stores; those are used verbatim. The Building Site submodel and the final combination are not in the file, so their values are flagged `assumption` in `results/s3_criteria.csv`. The one transformation the exercise text does specify for that submodel is visibility from roads: logistic decay (the more visible a site is from the roads, the less preferred it is), which is what the script uses.
 
 ## Section 4 — Pattern detection and space-time (`src/s4_patterns_spacetime.py`)
 
