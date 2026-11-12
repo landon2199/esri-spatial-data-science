@@ -198,3 +198,7 @@ Code: MIT License © 2026 Landon Melesky (see `LICENSE`). The license covers the
 - Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate. *Journal of the Royal Statistical Society B*, 57(1), 289–300.
 - Roberts, D. R., et al. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure. *Ecography*, 40(8), 913–929.
 - Openshaw, S. (1984). *The Modifiable Areal Unit Problem*. CATMOG 38, Geo Books.
+
+## AI assistance
+
+Built with an AI coding assistant (Claude Code, by Anthropic). Commits made with it carry its `Co-Authored-By` line.
