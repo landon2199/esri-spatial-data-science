@@ -286,6 +286,7 @@ def figures(arcpy, plt, models, loso_rows, loso_pooled, gdb, refined_vars):
     axes[1].set_title("Predicted tract turnout (refined forest model)")
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     fig.colorbar(sm, ax=axes, shrink=0.7, label="Voter turnout")
+    fig.text(0.01, -0.02, "Demographic variables: Esri Demographics 2019 (Esri MOOC exercise data), used under Esri's terms.", fontsize=8, color="0.35")
     fig.savefig(C.FIG / "s2_tract_prediction.png", bbox_inches="tight")
     plt.close(fig)
 

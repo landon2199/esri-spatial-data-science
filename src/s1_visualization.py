@@ -156,7 +156,8 @@ def scatter_matrix(plt, df):
                 ax.set_ylabel(labels[i])
             ax.tick_params(labelsize=7)
     fig.suptitle("Scatterplot matrix: voter turnout 2020 vs demographic variables (3,112 counties)")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.text(0.01, 0.008, "Demographic variables: Esri Demographics 2019 (Esri MOOC exercise data), used under Esri's terms.", fontsize=8, color="0.35")
     fig.savefig(C.FIG / "s1_scatter_matrix.png")
     plt.close(fig)
     return [r for r in r2 if r["y"] == "voter_turnout_2020" or r["x"] == "voter_turnout_2020"]
